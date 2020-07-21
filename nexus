@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nexus
+  namespace: aihub-portal
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nexus-portal
+        worktype: cpu
+    spec:
+      containers:
+        - name: nexus
+          image: docker-repo.modusecurity.com/nexus3:3.20.1
+          resources:
+            limits:
+              memory: "4Gi"
+              cpu: "1000m"
+            requests:
+              memory: "2Gi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8081
+            - containerPort: 5000
+            - containerPort: 6000
+            - containerPort: 6100
+            - containerPort: 7000
+          volumeMounts:
+            - name: nexus-data
+              mountPath: /nexus-data
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+      nodeSelector:
+        worktype: cpu
+      volumes:
+        - name: nexus-data
+          hostPath:
+            path: /data/nexus-data
+            type: Directory
