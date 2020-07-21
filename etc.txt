@@ -1,0 +1,909 @@
+Konvoy
+
+
+
+kubernetes version: 1.15.5
+calico version: 3.8.2
+containerd: 1.2.6
+Dokcer version: 19.03.5
+
+
+
+배포 서버 필요사항
+
+Docker 18.09.2 이상 (Nvidia 때문에 19버전 추천)
+
+kubectl 1.15.5 이상
+
+```
+curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+```
+
+```
+chmod +x ./kubectl
+```
+
+```
+sudo mv ./kubectl /usr/local/bin/kubectl
+```
+
+```
+kubectl version
+```
+
+
+
+
+
+
+
+노드 마다 최소 필요사항
+
+8core , 16G 메모리
+
+- CentOS 7.6
+- 방화벽이 비활성화
+- 컨테이너가 제거
+- Docker-ce가 제거
+- 스왑이 비활성화
+
+
+
+
+
+스왑 비활성화 
+
+swapoff -a
+
+fstab 주석
+
+
+
+```*
+mkdir konvoy-deploy
+cd konvoy-deploy
+```
+
+
+
+konvoy init --provisioner=none [--cluster-name <your-specified-name>]
+
+
+
+konvoy init --provisioner=none --addons-repositories /opt/konvoy/artifacts/kubernetes-base-addons@stable-1.16-1.2.0,/opt/konvoy/artifacts/kubeaddons-kommander@stable-1.16-1.0.0,/opt/konvoy/artifacts/kubeaddons-dispatch@stable-1.16-1.0.0 --cluster-name waih-cluster2
+
+
+
+konvoy init --provisioner=none --cluster-name kbsys-k8s
+
+provisioner 옵션 값은 aws,none(온프레미스 환경)
+
+방화벽 제거 (스왑 제거)
+
+ln -s /root/setup-file/konvoy-setup/linux_air_gapped/konvoy_v1.2.6 /usr/sbin/
+
+sudo setenforce 0
+
+
+
+sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+setenforce disabled
+
+
+
+아래 2개 파일 생성
+
+cluster.yaml, inventory.yaml  
+
+
+
+inventory.yaml 
+
+Ansible 설정 파일 위에 설정된 호스트 및 노드 들은 전부 ansible 설정 미리 해놓아야 함.
+
+
+
+Ansible 설치
+
+pip install ansible
+
+끝
+
+
+
+아래 파일에 호스트들 정의
+
+/etc/ansible/hosts
+
+
+
+사전 설치 테스트
+
+konvoy check preflight
+
+
+
+kubeadm init
+
+kubeadm init --apiserver-advertise-address=192.168.0.170 --pod-network-cidr=192.168.100.0/25
+
+
+
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+
+노드 docker 실행중이어야 함 (체크)
+
+hostname 유니크
+
+node 인터페이스 값 지정 x
+
+proxy 값 삭제(옵션)
+
+
+
+clean up failed konvoy deployment from cluster
+
+konvoy reset -y 
+
+
+
+
+
+#	오프라인 설치
+
+
+
+###	엔서블설치 필수
+
+해당 설치는 앤서블 설치  메뉴얼로
+
+
+
+###	GPU 서버 세팅
+
+
+
+LOCALDIR=/var/lib/nvidia-docker-repo
+
+
+
+LOCALDIR=/root/etc/nvidia-docker-repo
+
+mkdir -p $LOCALDIR && cd $LOCALDIR
+git clone -b gh-pages https://github.com/NVIDIA/libnvidia-container.git &&
+git clone -b gh-pages https://github.com/NVIDIA/nvidia-container-runtime.git &&
+git clone -b gh-pages https://github.com/NVIDIA/nvidia-docker.git
+
+
+
+위 해당 git 과 git 파일 미리 다운받아 백업해 둘것
+
+
+
+Centos Nvidia Docker 설치
+
+
+LOCALDIR=/var/lib/nvidia-docker-repo
+
+mkdir -p $LOCALDIR && cd $LOCALDIR
+git clone -b gh-pages https://github.com/NVIDIA/libnvidia-container.git
+git clone -b gh-pages https://github.com/NVIDIA/nvidia-container-runtime.git
+git clone -b gh-pages https://github.com/NVIDIA/nvidia-docker.git
+
+
+============================================================================================
+아래 파일 내용 수정 
+vi /var/lib/nvidia-docker-repo/nvidia-docker/centos7/nvidia-docker.repo
+
+[libnvidia-container]
+name=libnvidia-container
+baseurl=file:///var/lib/nvidia-docker-repo/libnvidia-container/centos7/$basearch
+repo_gpgcheck=1
+gpgcheck=0
+enabled=1
+gpgkey=file:///var/lib/nvidia-docker-repo/libnvidia-container/gpgkey
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+[nvidia-container-runtime]
+name=nvidia-container-runtime
+baseurl=file:///var/lib/nvidia-docker-repo/nvidia-container-runtime/centos7/$basearch
+repo_gpgcheck=1
+gpgcheck=0
+enabled=1
+gpgkey=file:///var/lib/nvidia-docker-repo/nvidia-container-runtime/gpgkey
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+[nvidia-docker]
+name=nvidia-docker
+baseurl=file:///var/lib/nvidia-docker-repo/nvidia-docker/centos7/$basearch
+repo_gpgcheck=1
+gpgcheck=0
+enabled=1
+gpgkey=file:///var/lib/nvidia-docker-repo/nvidia-docker/gpgkey
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+============================================================================================
+
+cp /var/lib/nvidia-docker-repo/nvidia-docker/centos7/nvidia-docker.repo /etc/yum.repos.d/nvidia-docker.repo
+yum install -y nvidia-docker2
+https://github.com/NVIDIA/nvidia-docker/issues/655
+systemctl restart docker
+
+
+
+#### Systemd drop-in file
+
+```
+sudo mkdir -p /etc/systemd/system/docker.service.d
+sudo tee /etc/systemd/system/docker.service.d/override.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd --host=fd:// --add-runtime=nvidia=/usr/bin/nvidia-container-runtime
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+```
+
+#### Daemon configuration file
+
+```sh
+sudo tee /etc/docker/daemon.json <<EOF
+{
+    "runtimes": {
+        "nvidia": {
+            "path": "/usr/bin/nvidia-container-runtime",
+            "runtimeArgs": []
+        }
+    }
+}
+EOF
+sudo pkill -SIGHUP dockerd
+```
+
+You can optionally reconfigure the default runtime by adding the following to `/etc/docker/daemon.json`:
+
+```sh
+"default-runtime": "nvidia"
+```
+
+
+
+###	GPU 외 다른 워커 노드 docker 세팅
+
+```sh
+wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-cli-19.03.5-3.el7.x86_64.rpm &&
+yum -y localinstall docker-ce-cli-19.03.5-3.el7.x86_64.rpm 
+
+wget http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-3.el7.noarch.rpm &&
+yum -y localinstall container-selinux-2.107-3.el7.noarch.rpm
+
+wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm &&
+yum -y localinstall containerd.io-1.2.6-3.3.el7.x86_64.rpm 
+
+wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-19.03.5-3.el7.x86_64.rpm &&
+yum -y localinstall docker-ce-19.03.5-3.el7.x86_64.rpm
+```
+
+
+
+```sh
+mkdir -p /etc/systemd/system/docker.service.d &&
+systemctl daemon-reload &&
+systemctl restart docker &&
+systemctl enable docker.service
+```
+
+
+
+```sh
+[root@K8S-GPU-TEST-NODE konvoy_etc]# nvidia-docker
+/usr/bin/nvidia-docker: line 34: /usr/bin/docker: Permission denied
+/usr/bin/nvidia-docker: line 34: /usr/bin/docker: Success
+위 문제 해결법
+$ sudo semanage fcontext -a -t container_runtime_exec_t /usr/bin/nvidia-docker
+$ sudo restorecon -v /usr/bin/nvidia-docker
+```
+
+
+
+*해당 폴더로 이동 후 실행(통 한줄)
+
+```sh
+./konvoy init --provisioner=none --addons-config-repository /opt/konvoy/artifacts/kubeaddons-configs --addons-config-version stable-1.15.5-2-air-gapped --cluster-name kbsys-k8s
+
+./konvoy init --provisioner=none --addons-config-repository /opt/konvoy/artifacts/kubernetes-base-addons --addons-config-version stable-1.16.4-2 --cluster-name kbsys-k8s
+
+
+```
+
+konvoy init --provisioner=none --cluster-name kbsys-k8s
+
+
+
+```yaml
+control-plane:
+  hosts:
+    192.168.0.172:
+      ansible_host: "192.168.0.172"
+node:
+  hosts:
+    192.168.0.173:
+      ansible_host: "192.168.0.173"
+      node_pool: worker
+    192.168.0.176:
+      ansible_host: "192.168.0.176"
+      node_pool: worker
+bastion: {}
+all:
+  vars:
+    version: v1beta1
+    order: sorted
+    ansible_user: "root"
+    ansible_port: 22
+```
+
+
+
+```yaml
+---
+kind: ClusterConfiguration
+apiVersion: konvoy.mesosphere.io/v1alpha1
+metadata:
+  name: kbsys-k8s
+  creationTimestamp: "2020-01-03T02:16:22.845814098Z"
+spec:
+  imageRegistries:
+    - server: https://docker-repo.modusecurity.com
+      username: "admin"
+      password: "admin1234"
+      default: true
+  kubernetes:
+    version: 1.15.5
+    controlPlane:
+      controlPlaneEndpointOverride: 192.168.0.181:6443
+      certificate: {}
+      keepalived:
+        enabled: true
+    networking:
+      podSubnet: 192.168.200.0/24
+      serviceSubnet: 10.0.0.0/18
+    cloudProvider:
+      provider: none
+    admissionPlugins:
+      enabled:
+      - NodeRestriction
+      - AlwaysPullImages
+      disabled: []
+    preflightChecks:
+      errorsToIgnore: []
+  containerNetworking:
+    calico:
+      version: v3.8.2
+  containerRuntime:
+    containerd:
+      version: 1.2.6
+      configData:
+        data: ""
+        replace: false
+  packageRepository:
+    defaultRepositoryInstallationDisabled: true
+  nodePools:
+  - name: worker
+    gpu:
+      nvidia:
+        enabled: false
+  addons:
+    configRepository: /opt/konvoy/artifacts/kubeaddons-configs
+    configVersion: stable-1.15.5-2-air-gapped
+    addonsList:
+    - name: cert-manager
+      enabled: true
+    - name: dashboard
+      enabled: true
+    - name: dex
+      enabled: true
+    - name: dex-k8s-authenticator
+      enabled: true
+    - name: elasticsearch
+      enabled: true
+    - name: elasticsearchexporter
+      enabled: true
+    - name: fluentbit
+      enabled: true
+    - name: helm
+      enabled: true
+    - name: kibana
+      enabled: true
+    - name: kommander
+      enabled: true
+    - name: konvoyconfig
+      enabled: true
+    - name: localvolumeprovisioner
+      enabled: true
+    - name: metallb
+      enabled: true
+      values: |-
+        configInline:
+          address-pools:
+          - name: default
+            protocol: layer2
+            addresses:
+            - 192.168.0.182
+    - name: opsportal
+      enabled: true
+    - name: prometheus
+      enabled: true
+    - name: prometheusadapter
+      enabled: true
+    - name: traefik
+      enabled: true
+    - name: traefik-forward-auth
+      enabled: true
+    - name: velero
+      enabled: true
+  version: v1.2.6
+
+```
+
+
+
+설치 체크 테스트
+
+```sh
+./konvoy check preflight
+```
+
+
+
+service subnet 관련 오류 나올 때 
+
+ip -s  -o  route get 10.0.0.0/18
+
+각 서버마다 임시 GW설정
+
+```sh
+route add default gw 192.168.0.1
+```
+
+
+
+
+
+konvoy 설치 관련 필요 rpm package
+
+rpm -qa |grep 
+
+nfs-utils 문제: 배포 서버에 해당 패키지 설치 확인해볼것 (설치 되있을시 삭제 후 설치)
+
+
+
+
+
+conntrack-tool 설치
+
+```sh
+wget http://mirror.centos.org/centos/7/os/x86_64/Packages/libnetfilter_cthelper-1.0.0-10.el7.x86_64.rpm
+yum -y localinstall libnetfilter_cthelper-1.0.0-10.el7.x86_64.rpm
+
+wget http://mirror.centos.org/centos/7/os/x86_64/Packages/libnetfilter_queue-1.0.2-2.el7_2.x86_64.rpm
+yum -y localinstall libnetfilter_queue-1.0.2-2.el7_2.x86_64.rpm
+
+wget http://mirror.centos.org/centos/7/os/x86_64/Packages/libnetfilter_cttimeout-1.0.0-6.el7.x86_64.rpm
+yum -y localinstall libnetfilter_cttimeout-1.0.0-6.el7.x86_64.rpm
+
+wget http://mirror.centos.org/centos/7/os/x86_64/Packages/conntrack-tools-1.4.4-5.el7.x86_64.rpm
+yum -y localinstall conntrack-tools-1.4.4-5.el7.x86_64.rpm
+```
+
+
+
+배포 서버에 docker registry 설치 
+
+주의 : 미리 registry 도커 이미지 파일로 만들어서 반입
+
+```sh
+docker pull registry:latest
+docker run --name personal-registry -d -p 5000:5000 registry
+vi /etc/docker/daemon.json
+"insecure-registries": ["0.0.0.0:5000","192.168.0.180:5000"],
+```
+
+
+
+```sh
+konvoy config images seed
+```
+
+
+
+ex)
+
+```toml
+root = "/var/lib/containerd"
+state = "/run/containerd"
+oom_score = 0
+
+[grpc]
+  address = "/run/containerd/containerd.sock"
+  uid = 0
+  gid = 0
+  max_recv_message_size = 16777216
+  max_send_message_size = 16777216
+
+[debug]
+  address = ""
+  uid = 0
+  gid = 0
+  level = ""
+
+[metrics]
+  # Set the metrics TCP address
+  address = "192.168.0.174:1338"
+  grpc_histogram = false
+
+[cgroup]
+  path = ""
+
+[plugins]
+  [plugins.cgroups]
+    no_prometheus = false
+  [plugins.cri]
+    stream_server_address = "127.0.0.1"
+    stream_server_port = "0"
+    enable_selinux = false
+    sandbox_image = "192.168.0.180:5000/k8s.gcr.io/pause:3.1"
+    stats_collect_period = 10
+    systemd_cgroup = false
+    enable_tls_streaming = false
+    max_container_log_line_size = 16384
+    [plugins.cri.containerd]
+      snapshotter = "overlayfs"
+      no_pivot = false
+      [plugins.cri.containerd.default_runtime]
+        runtime_type = "io.containerd.runtime.v1.linux"
+        runtime_engine = ""
+        runtime_root = ""
+      [plugins.cri.containerd.untrusted_workload_runtime]
+        runtime_type = ""
+        runtime_engine = ""
+        runtime_root = ""
+    [plugins.cri.cni]
+      bin_dir = "/opt/cni/bin"
+      conf_dir = "/etc/cni/net.d"
+      conf_template = ""
+    [plugins.cri.registry]
+      [plugins.cri.registry.mirrors]
+          [plugins.cri.registry.mirrors."docker.elastic.co"]
+          endpoint = ["http://192.168.0.180:5000"]
+          [plugins.cri.registry.mirrors."docker.io"]
+          endpoint = ["http://192.168.0.180:5000","https://registry-1.docker.io"]
+    #      [plugins.cri.registry.mirrors."gcr.io"]
+    #      endpoint = ["http://192.168.0.180:5000"]
+    #      [plugins.cri.registry.mirrors."quay.io"]
+    #      endpoint = ["http://192.168.0.180:5000"]
+          [plugins.cri.registry.mirrors."https://192.168.0.180:5000"]
+          endpoint = ["http://192.168.0.180:5000"]
+        #[plugins.cri.registry.auths]
+        #  [plugins.cri.registry.auths."http://192.168.0.180:5000"]
+        #  username = ""
+        #  password = ""
+        #  auth = ""
+        #  identitytoken = ""
+      [plugins.cri.x509_key_pair_streaming]
+      tls_cert_file = ""
+      tls_key_file = ""
+  [plugins.diff-service]
+    default = ["walking"]
+  [plugins.linux]
+    shim = "containerd-shim"
+    runtime = "runc"
+    runtime_root = ""
+    no_shim = false
+    shim_debug = false
+  [plugins.opt]
+    path = "/opt/containerd"
+  [plugins.restart]
+    interval = "10s"
+  [plugins.scheduler]
+    pause_threshold = 0.02
+    deletion_threshold = 0
+    mutation_threshold = 100
+    schedule_delay = "0s"
+    startup_delay = "100ms"
+
+```
+
+
+
+### Docker public registry 세팅
+
+docker run -d --name proxy-docker -p 443:443 --link docker-registry:registry geunsam2/docker-proxy:1
+
+docker run -d -p 80:80 -v /root/iso:/usr/share/nginx/html nginx
+
+
+
+docker run -d --name proxy-docker -p 443:443 --link registry:registry dmkim104/docker-proxy:4
+
+도커 런시 아래 에러 부분 주의
+
+WARNING: IPv4 forwarding is disabled. Networking will not work.
+
+```sh
+net.ipv4.ip_forward=1
+echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+```
+
+
+
+### conntrack 설치
+
+[root@K8S-MASTER yum.repos.d]# rpm -qa |grep conntrack
+libnetfilter_conntrack-1.0.6-1.el7_3.x86_64
+conntrack-tools-1.4.4-5.el7.x86_64
+
+
+
+###	Docker 설치
+
+
+
+###	NFS-utils 설치
+
+
+
+###	konvoy images seed
+
+konvoy config images seed
+
+
+
+systemctl stop firewalld
+
+
+
+###	그 외 문제
+
+Master, Worker node : docker , containerd 설치 (x)  konvoy 로 설치 
+
+대신 worker 에서는 마스터 서버의 admin.conf 파일 가져와 
+
+#####	kubeadm token create --print-join-command
+
+**위 에러 문제 해결책은 각 워커 및 마스터 노드에 /root/.kube/config 파일 삭제(가비지)**
+
+-----
+
+```sh
+scp 192.168.0.174:/etc/kubernetes/admin.conf /etc/kubernetes/
+cp /etc/kubernetes/admin.conf /root/.kube/config
+kubeadm token create --print-join-command
+kubeadm join 192.168.0.181:6443 --token 6nrdpz.uhzk61k9cnfiht9p     --discovery-token-ca-cert-hash sha256:38bb2045ea52f800f99920b2eb708faeed9c030a79b42e89570c4aeebbe2649e
+```
+
+(조인 구문은 값 변경해야함)
+
+하여 kubernetes 설치 진행 하여야 함
+
+
+
+배포서버에서 **KUBECONFIG=./admin.conf kubectl get node**  x509 에러 관련
+
+- mesos 에서 원인 파악 중. 임시 방법은 아래
+
+```
+insecure-skip-tls-verify: true
+
+cluster: certificate-authority-data (데이터 삭제)
+```
+
+
+
+### GPU 서비스 올릴 demonset docker file
+
+
+
+```
+journalctl -fu containerd
+```
+
+####	k8s 설치시 체크 명령어
+
+```sh
+kubectl config view
+kubectl config view --flatten
+kubeadm alpha certs check-expiration
+
+echo "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN5RENDQWJDZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJd01ERXdNakF4TlRFek9Gb1hEVEk1TVRJek1EQXhOVEV6T0Zvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTThGCjZiTE95d1dhYnNkWWVCeDAwd2tkMmk1a1BUR1I2NndtcCtpbDJuYkY5aXdxNVlMaC9qS2VQWEVjL003SzRxSTgKYjQ5RkpPeDdOV3F1OTlXbm8vT3dyOVdwcTdnOTBhQ2pRVTBzelpaRFZ1bWQxaWZobFo2c2doWHVGMDBQd2oxdwpydXp4bjZBNnpua0NpOEo3Y2Yyci9UYTlIL3RBbXUvOFFtTHpjcU90LzdyOCtieEtrM3VEN1IwZEJra25LKzZpCk1xWGQxeFRySXd3L2VwQ0lpUHpuR3Bra2VTb3Z2WS9nVUJzWWNlTEUwRzRmUHlITTZrZUtFVEtxZU84enBwQi8KOUVxKzNQSGZJTHNjblIvck5hYlJWYVNhdHY5UjhPbm0zd1A0RmtURGVBK2pJMDlqaDBLYjlTdkNaVTE0NDJoRQpISTdiSTNwV2E1Q0czU243ZEIwQ0F3RUFBYU1qTUNFd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0RRWUpLb1pJaHZjTkFRRUxCUUFEZ2dFQkFBeDFqZklIWWRsLzdSQjFWNFUwcHY2elFQNkMKRXJJeE9jdnBacTQ3U0VCQ1hVTnBpY2NzYnIwWWJxc3BlWEgvVW1adHhhenhtUXBsd3p5eGxncmFrYjBYSWljMwo2aFQ2OFRwNTgrZndCeDVPNHZHbXNTaWNpcmlvQTFid2xpbjFvWUljaW1kVDVnaGppOWlndEtKUENwai9kM1dnCm1FNlFYOWJPT1dlSjArcGxRMzBiKzVZNkYzL0J5eXRIcXNJU1FHaVBvaU83NXprLzJOQm5PV0ptWVZMcTZqNlYKQ3lOdTB3Z2tMUDNoNWJyV1NWRWhrZzBIcU9xRzNpcHFZTXI5RkhVOXB3OURVNU56cER2aWI4aU1NSUdxYjR5Ygo2bWpxdHZUa0NQQWd5NXo0amxvZkRYZTBwSDQ3NDJDUGtZaG5XbFNyYmM4Ly9DZWJiVC9lay9laXlnZz0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=" | base64 --decode | openssl x509 -text
+```
+
+
+
+
+
+```
+KUBECONFIG=./admin.conf kubectl edit secret traefik-kubeaddons-certificate-temporary -n kubeaddons
+
+KUBECONFIG=./admin.conf kubectl apply -f /tmp/kubectl-edit-xk3lb.yaml
+
+KUBECONFIG=./admin.conf kubectl get secret -n kubeaddons  -A
+KUBECONFIG=./admin.conf kubectl get certificate -n kubeaddons  -A
+
+KUBECONFIG=../admin.conf kubectl apply -f pv-volume.yaml
+KUBECONFIG=../admin.conf kubectl delete pv task-pv-volume-elastic
+```
+
+
+
+
+
+crictl ps 에러 발생시
+
+code = Unimplemented desc = unknown service runtime.v1alpha2.RuntimeService
+
+containerd config default > /etc/containerd/config.toml
+
+
+
+
+
+20.04.22 
+
+konvoy 1.4.2 버전 airgap 설치 부분 이슈 
+
+1. 오류 내용
+
+   ```sh
+   [root@deploy-01-19 konvoy_v1.4.2]# ./konvoy init --provisioner=none --addons-repositories /opt/konvoy/artifacts/kubernetes-base-addons@stable-1.16-1.2.0,/opt/konvoy/artifacts/kubeaddons-kommander@stable-1.16-1.0.0,/opt/konvoy/artifacts/kubeaddons-dispatch@stable-1.16-1.0.0 --cluster-name waih-cluster2
+   
+   Error: unexpected client error: reference not found
+   ```
+
+   해결 방안
+
+2. 
+
+```sh
+git checkout master
+```
+
+
+
+```sh
+kind: ClusterConfiguration
+apiVersion: konvoy.mesosphere.io/v1beta1
+spec:
+  osPackages:
+    enableAdditionalRepositories: false
+```
+
+
+
+```sh
+kind: ClusterConfiguration
+apiVersion: konvoy.mesosphere.io/v1beta1
+metadata:
+  name: konvoy_v1.4.2
+  creationTimestamp: "2020-04-22T06:05:02Z"
+spec:
+  imageRegistries:
+    - server: https://www.kb-sys.co.kr
+      username: "admin"
+      password: "admin1234"
+      default: true
+  kubernetes:
+    version: 1.16.8
+    controlPlane:
+      controlPlaneEndpointOverride: "192.168.0.236:6443"
+      certificate: {}
+      keepalived: {}
+    networking:
+      podSubnet: 192.168.100.0/24
+      serviceSubnet: 10.0.0.0/18
+    cloudProvider:
+      provider: none
+    admissionPlugins:
+      enabled:
+      - AlwaysPullImages
+      - NodeRestriction
+  containerNetworking:
+    calico:
+      version: v3.13.1
+      encapsulation: ipip
+      mtu: 1480
+  containerRuntime:
+    containerd:
+      version: 1.2.6
+  osPackages:
+    enableAdditionalRepositories: false
+  nodePools:
+  - name: worker
+  addons:
+  - configRepository: /opt/konvoy/artifacts/kubernetes-base-addons
+    configVersion: stable-1.16-1.2.0
+    helmRepository:
+      image: mesosphere/konvoy-addons-chart-repo:v1.4.2
+    addonsList:
+    - name: cert-manager
+      enabled: true
+    - name: dashboard
+      enabled: true
+    - name: defaultstorageclass-protection
+      enabled: true
+    - name: dex
+      enabled: true
+    - name: dex-k8s-authenticator
+      enabled: true
+    - name: elasticsearch
+      enabled: false
+    - name: elasticsearch-curator
+      enabled: false
+    - name: elasticsearchexporter
+      enabled: false
+    - name: external-dns
+      enabled: false
+    - name: flagger
+      enabled: false
+    - name: fluentbit
+      enabled: true
+    - name: gatekeeper
+      enabled: true
+    - name: istio # Istio is currently in Preview
+      enabled: false
+    - name: kibana
+      enabled: false
+    - name: konvoyconfig
+      enabled: true
+    - name: kube-oidc-proxy
+      enabled: true
+    - name: localvolumeprovisioner
+      enabled: true
+    - name: metallb
+      enabled: true
+      values: |
+        configInline:
+          address-pools:
+          - name: default
+            protocol: layer2
+            # configure addresses for your network
+            addresses: [192.168.0.237]
+    - name: nvidia
+      enabled: false
+    - name: opsportal
+      enabled: true
+    - name: prometheus
+      enabled: false
+    - name: prometheusadapter
+      enabled: false
+    - name: reloader
+      enabled: true
+    - name: traefik
+      enabled: true
+    - name: traefik-forward-auth
+      enabled: true
+    - name: velero
+      enabled: true
+  - configRepository: /opt/konvoy/artifacts/kubeaddons-dispatch
+    configVersion: stable-1.16-1.0.0
+    helmRepository:
+      image: mesosphere/konvoy-addons-chart-repo:v1.4.2
+    addonsList:
+    - name: dispatch
+      enabled: false
+  - configRepository: /opt/konvoy/artifacts/kubeaddons-kommander
+    configVersion: stable-1.16-1.0.0
+    helmRepository:
+      image: mesosphere/konvoy-addons-chart-repo:v1.4.2
+    addonsList:
+    - name: kommander
+      enabled: true
+  version: v1.4.2
+```
+
