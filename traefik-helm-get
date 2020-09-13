@@ -1,0 +1,771 @@
+[root@deploy-01-19 konvoy_v1.4.2]# helm get traefik-kubeaddons
+REVISION: 3
+RELEASED: Fri Sep 11 20:30:54 2020
+CHART: traefik-1.72.15
+USER-SUPPLIED VALUES:
+dashboard:
+  domain: ""
+  enabled: true
+  ingress:
+    annotations:
+      kubernetes.io/ingress.class: traefik
+      traefik.frontend.rule.type: PathPrefixStrip
+      traefik.ingress.kubernetes.io/auth-response-headers: X-Forwarded-User,Authorization,Impersonate-User,Impersonate-Group
+      traefik.ingress.kubernetes.io/auth-type: forward
+      traefik.ingress.kubernetes.io/auth-url: http://traefik-forward-auth-kubeaddons.kubeaddons.svc.cluster.local:4181/
+      traefik.ingress.kubernetes.io/priority: "2"
+    path: /ops/portal/traefik
+  serviceType: ClusterIP
+deploymentAnnotations:
+  configmap.reloader.stakater.com/reload: konvoyconfig-kubeaddons
+  secret.reloader.stakater.com/reload: traefik-kubeaddons-certificate
+initCertJobImage: mesosphere/kubeaddons-addon-initializer:v0.1.5
+initContainers:
+- args:
+  - traefik
+  env:
+  - name: TRAEFIK_INGRESS_NAMESPACE
+    value: kubeaddons
+  - name: TRAEFIK_INGRESS_SERVICE_NAME
+    value: traefik-kubeaddons
+  - name: TRAEFIK_INGRESS_CERTIFICATE_NAME
+    value: traefik-kubeaddons
+  - name: TRAEFIK_INGRESS_CERTIFICATE_ISSUER
+    value: kubernetes-ca
+  - name: TRAEFIK_INGRESS_CERTIFICATE_SECRET_NAME
+    value: traefik-kubeaddons-certificate
+  - name: TRAEFIK_KONVOY_ADDONS_CONFIG_MAP
+    value: konvoyconfig-kubeaddons
+  - name: TRAEFIK_CLUSTER_HOSTNAME_KEY
+    value: clusterHostname
+  image: mesosphere/kubeaddons-addon-initializer:v0.1.5
+  name: initialize-traefik-certificate
+kubernetes:
+  ingressEndpoint:
+    publishedService: kubeaddons/traefik-kubeaddons
+metrics:
+  prometheus:
+    enabled: true
+rbac:
+  enabled: true
+replicas: 2
+resources:
+  limits:
+    cpu: 1000m
+  requests:
+    cpu: 500m
+service:
+  labels:
+    servicemonitor.kubeaddons.mesosphere.io/path: metrics
+ssl:
+  enabled: true
+  enforced: true
+  insecureSkipVerify: true
+  useCertManager: true
+
+COMPUTED VALUES:
+accessLogs:
+  enabled: false
+  fields:
+    defaultMode: keep
+    headers:
+      defaultMode: keep
+      names: {}
+    names: {}
+  format: common
+acme:
+  challengeType: tls-sni-01
+  delayBeforeCheck: 0
+  dnsProvider:
+    auroradns:
+      AURORA_ENDPOINT: ""
+      AURORA_KEY: ""
+      AURORA_USER_ID: ""
+    azure:
+      AZURE_CLIENT_ID: ""
+      AZURE_CLIENT_SECRET: ""
+      AZURE_RESOURCE_GROUP: ""
+      AZURE_SUBSCRIPTION_ID: ""
+      AZURE_TENANT_ID: ""
+    cloudflare:
+      CLOUDFLARE_API_KEY: ""
+      CLOUDFLARE_EMAIL: ""
+    digitalocean:
+      DO_AUTH_TOKEN: ""
+    dnsimple:
+      DNSIMPLE_BASE_URL: ""
+      DNSIMPLE_OAUTH_TOKEN: ""
+    dnsmadeeasy:
+      DNSMADEEASY_API_KEY: ""
+      DNSMADEEASY_API_SECRET: ""
+      DNSMADEEASY_SANDBOX: ""
+    dnspod:
+      DNSPOD_API_KEY: ""
+    dreamhost:
+      DREAMHOST_API_KEY: ""
+    dyn:
+      DYN_CUSTOMER_NAME: ""
+      DYN_PASSWORD: ""
+      DYN_USER_NAME: ""
+    existingSecretName: ""
+    exoscale:
+      EXOSCALE_API_KEY: ""
+      EXOSCALE_API_SECRET: ""
+      EXOSCALE_ENDPOINT: ""
+    gandi:
+      GANDI_API_KEY: ""
+    gcloud:
+      GCE_PROJECT: ""
+      GCE_SERVICE_ACCOUNT_FILE: ""
+    godaddy:
+      GODADDY_API_KEY: ""
+      GODADDY_API_SECRET: ""
+    linode:
+      LINODE_API_KEY: ""
+    name: nil
+    namecheap:
+      NAMECHEAP_API_KEY: ""
+      NAMECHEAP_API_USER: ""
+    ns1:
+      NS1_API_KEY: ""
+    otc:
+      OTC_DOMAIN_NAME: ""
+      OTC_IDENTITY_ENDPOINT: ""
+      OTC_PASSWORD: ""
+      OTC_PROJECT_NAME: ""
+      OTC_USER_NAME: ""
+    ovh:
+      OVH_APPLICATION_KEY: ""
+      OVH_APPLICATION_SECRET: ""
+      OVH_CONSUMER_KEY: ""
+      OVH_ENDPOINT: ""
+    pdns:
+      PDNS_API_URL: ""
+    rackspace:
+      RACKSPACE_API_KEY: ""
+      RACKSPACE_USER: ""
+    rfc2136:
+      RFC2136_NAMESERVER: ""
+      RFC2136_TIMEOUT: ""
+      RFC2136_TSIG_ALGORITHM: ""
+      RFC2136_TSIG_KEY: ""
+      RFC2136_TSIG_SECRET: ""
+    route53:
+      AWS_ACCESS_KEY_ID: ""
+      AWS_REGION: ""
+      AWS_SECRET_ACCESS_KEY: ""
+    vultr:
+      VULTR_API_KEY: ""
+  domains:
+    domainsList: null
+    enabled: false
+  email: admin@example.com
+  enabled: false
+  keyType: RSA4096
+  logging: false
+  onHostRule: true
+  persistence:
+    accessMode: ReadWriteOnce
+    annotations: {}
+    enabled: true
+    size: 1Gi
+  resolvers: []
+  staging: true
+affinity: {}
+configFiles: {}
+dashboard:
+  auth: {}
+  domain: ""
+  enabled: true
+  ingress:
+    annotations:
+      kubernetes.io/ingress.class: traefik
+      traefik.frontend.rule.type: PathPrefixStrip
+      traefik.ingress.kubernetes.io/auth-response-headers: X-Forwarded-User,Authorization,Impersonate-User,Impersonate-Group
+      traefik.ingress.kubernetes.io/auth-type: forward
+      traefik.ingress.kubernetes.io/auth-url: http://traefik-forward-auth-kubeaddons.kubeaddons.svc.cluster.local:4181/
+      traefik.ingress.kubernetes.io/priority: "2"
+    path: /ops/portal/traefik
+  service: {}
+  serviceType: ClusterIP
+  statistics: {}
+dashboardRBAC:
+  enabled: true
+debug:
+  enabled: false
+deployment:
+  hostPort:
+    dashboardEnabled: false
+    httpEnabled: false
+    httpsEnabled: false
+deploymentAnnotations:
+  configmap.reloader.stakater.com/reload: konvoyconfig-kubeaddons
+  secret.reloader.stakater.com/reload: traefik-kubeaddons-certificate
+deploymentStrategy: {}
+env: {}
+externalTrafficPolicy: Cluster
+fileBackend: ""
+forwardedHeaders:
+  enabled: false
+  trustedIPs: []
+gzip:
+  enabled: true
+image: traefik
+imageTag: 1.7.12
+initCertJobImage: mesosphere/kubeaddons-addon-initializer:v0.1.5
+initContainers:
+- args:
+  - traefik
+  env:
+  - name: TRAEFIK_INGRESS_NAMESPACE
+    value: kubeaddons
+  - name: TRAEFIK_INGRESS_SERVICE_NAME
+    value: traefik-kubeaddons
+  - name: TRAEFIK_INGRESS_CERTIFICATE_NAME
+    value: traefik-kubeaddons
+  - name: TRAEFIK_INGRESS_CERTIFICATE_ISSUER
+    value: kubernetes-ca
+  - name: TRAEFIK_INGRESS_CERTIFICATE_SECRET_NAME
+    value: traefik-kubeaddons-certificate
+  - name: TRAEFIK_KONVOY_ADDONS_CONFIG_MAP
+    value: konvoyconfig-kubeaddons
+  - name: TRAEFIK_CLUSTER_HOSTNAME_KEY
+    value: clusterHostname
+  image: mesosphere/kubeaddons-addon-initializer:v0.1.5
+  name: initialize-traefik-certificate
+kubernetes:
+  ingressEndpoint:
+    publishedService: kubeaddons/traefik-kubeaddons
+kvprovider:
+  importAcme: false
+  storeAcme: false
+metrics:
+  datadog:
+    enabled: false
+  prometheus:
+    enabled: true
+    restrictAccess: false
+  statsd:
+    enabled: false
+nodeSelector: {}
+podDisruptionBudget: {}
+proxyProtocol:
+  enabled: false
+  trustedIPs: []
+rbac:
+  enabled: true
+replicas: 2
+resources:
+  limits:
+    cpu: 1000m
+  requests:
+    cpu: 500m
+secretFiles: {}
+securityContext: {}
+sendAnonymousUsage: false
+service:
+  labels:
+    servicemonitor.kubeaddons.mesosphere.io/path: metrics
+  nodePorts:
+    http: ""
+    https: ""
+serviceType: LoadBalancer
+ssl:
+  auth: {}
+  caSecretName: null
+  defaultCert: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUVtekNDQTRPZ0F3SUJBZ0lKQUpBR1FsTW1DMGt5TUEwR0NTcUdTSWIzRFFFQkJRVUFNSUdQTVFzd0NRWUQKVlFRR0V3SlZVekVSTUE4R0ExVUVDQk1JUTI5c2IzSmhaRzh4RURBT0JnTlZCQWNUQjBKdmRXeGtaWEl4RkRBUwpCZ05WQkFvVEMwVjRZVzF3YkdWRGIzSndNUXN3Q1FZRFZRUUxFd0pKVkRFV01CUUdBMVVFQXhRTktpNWxlR0Z0CmNHeGxMbU52YlRFZ01CNEdDU3FHU0liM0RRRUpBUllSWVdSdGFXNUFaWGhoYlhCc1pTNWpiMjB3SGhjTk1UWXgKTURJME1qRXdPVFV5V2hjTk1UY3hNREkwTWpFd09UVXlXakNCanpFTE1Ba0dBMVVFQmhNQ1ZWTXhFVEFQQmdOVgpCQWdUQ0VOdmJHOXlZV1J2TVJBd0RnWURWUVFIRXdkQ2IzVnNaR1Z5TVJRd0VnWURWUVFLRXd0RmVHRnRjR3hsClEyOXljREVMTUFrR0ExVUVDeE1DU1ZReEZqQVVCZ05WQkFNVURTb3VaWGhoYlhCc1pTNWpiMjB4SURBZUJna3EKaGtpRzl3MEJDUUVXRVdGa2JXbHVRR1Y0WVcxd2JHVXVZMjl0TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQwpBUThBTUlJQkNnS0NBUUVBdHVKOW13dzlCYXA2SDROdUhYTFB6d1NVZFppNGJyYTFkN1ZiRUJaWWZDSStZNjRDCjJ1dThwdTNhVTVzYXVNYkQ5N2pRYW95VzZHOThPUHJlV284b3lmbmRJY3RFcmxueGpxelUyVVRWN3FEVHk0bkEKNU9aZW9SZUxmZXFSeGxsSjE0VmlhNVFkZ3l3R0xoRTlqZy9jN2U0WUp6bmg5S1dZMnFjVnhEdUdEM2llaHNEbgphTnpWNFdGOWNJZm1zOHp3UHZPTk5MZnNBbXc3dUhUKzNiSzEzSUloeDI3ZmV2cXVWcENzNDFQNnBzdStWTG4yCjVIRHk0MXRoQkN3T0wrTithbGJ0ZktTcXM3TEFzM25RTjFsdHpITHZ5MGE1RGhkakpUd2tQclQrVXhwb0tCOUgKNFpZazErRUR0N09QbGh5bzM3NDFRaE4vSkNZK2RKbkFMQnNValFJREFRQUJvNEgzTUlIME1CMEdBMVVkRGdRVwpCQlJwZVc1dFhMdHh3TXJvQXM5d2RNbTUzVVVJTERDQnhBWURWUjBqQklHOE1JRzVnQlJwZVc1dFhMdHh3TXJvCkFzOXdkTW01M1VVSUxLR0JsYVNCa2pDQmp6RUxNQWtHQTFVRUJoTUNWVk14RVRBUEJnTlZCQWdUQ0VOdmJHOXkKWVdSdk1SQXdEZ1lEVlFRSEV3ZENiM1ZzWkdWeU1SUXdFZ1lEVlFRS0V3dEZlR0Z0Y0d4bFEyOXljREVMTUFrRwpBMVVFQ3hNQ1NWUXhGakFVQmdOVkJBTVVEU291WlhoaGJYQnNaUzVqYjIweElEQWVCZ2txaGtpRzl3MEJDUUVXCkVXRmtiV2x1UUdWNFlXMXdiR1V1WTI5dGdna0FrQVpDVXlZTFNUSXdEQVlEVlIwVEJBVXdBd0VCL3pBTkJna3EKaGtpRzl3MEJBUVVGQUFPQ0FRRUFjR1hNZms4TlpzQit0OUtCemwxRmw2eUlqRWtqSE8wUFZVbEVjU0QyQjRiNwpQeG5NT2pkbWdQcmF1SGI5dW5YRWFMN3p5QXFhRDZ0YlhXVTZSeENBbWdMYWpWSk5aSE93NDVOMGhyRGtXZ0I4CkV2WnRRNTZhbW13QzFxSWhBaUE2MzkwRDNDc2V4N2dMNm5KbzdrYnIxWVdVRzN6SXZveGR6OFlEclpOZVdLTEQKcFJ2V2VuMGxNYnBqSVJQNFhac25DNDVDOWdWWGRoM0xSZTErd3lRcTZoOVFQaWxveG1ENk5wRTlpbVRPbjJBNQovYkozVktJekFNdWRlVTZrcHlZbEpCemRHMXVhSFRqUU9Xb3NHaXdlQ0tWVVhGNlV0aXNWZGRyeFF0aDZFTnlXCnZJRnFhWng4NCtEbFNDYzkzeWZrL0dsQnQrU0tHNDZ6RUhNQjlocVBiQT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
+  defaultIPList: []
+  defaultKey: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3dJQkFBS0NBUUVBdHVKOW13dzlCYXA2SDROdUhYTFB6d1NVZFppNGJyYTFkN1ZiRUJaWWZDSStZNjRDCjJ1dThwdTNhVTVzYXVNYkQ5N2pRYW95VzZHOThPUHJlV284b3lmbmRJY3RFcmxueGpxelUyVVRWN3FEVHk0bkEKNU9aZW9SZUxmZXFSeGxsSjE0VmlhNVFkZ3l3R0xoRTlqZy9jN2U0WUp6bmg5S1dZMnFjVnhEdUdEM2llaHNEbgphTnpWNFdGOWNJZm1zOHp3UHZPTk5MZnNBbXc3dUhUKzNiSzEzSUloeDI3ZmV2cXVWcENzNDFQNnBzdStWTG4yCjVIRHk0MXRoQkN3T0wrTithbGJ0ZktTcXM3TEFzM25RTjFsdHpITHZ5MGE1RGhkakpUd2tQclQrVXhwb0tCOUgKNFpZazErRUR0N09QbGh5bzM3NDFRaE4vSkNZK2RKbkFMQnNValFJREFRQUJBb0lCQUhrTHhka0dxNmtCWWQxVAp6MkU4YWFENnhneGpyY2JSdGFCcTc3L2hHbVhuQUdaWGVWcE81MG1SYW8wbHZ2VUgwaE0zUnZNTzVKOHBrdzNmCnRhWTQxT1dDTk1PMlYxb1MvQmZUK3Zsblh6V1hTemVQa0pXd2lIZVZMdVdEaVVMQVBHaWl4emF2RFMyUnlQRmEKeGVRdVNhdE5pTDBGeWJGMG5Zd3pST3ZoL2VSa2NKVnJRZlZudU1melFkOGgyMzZlb1UxU3B6UnhSNklubCs5UApNc1R2Wm5OQmY5d0FWcFo5c1NMMnB1V1g3SGNSMlVnem5oMDNZWUZJdGtDZndtbitEbEdva09YWHBVM282aWY5ClRIenBleHdubVJWSmFnRG85bTlQd2t4QXowOW80cXExdHJoU1g1U2p1K0xyNFJvOHg5bytXdUF1VnVwb0lHd0wKMWVseERFRUNnWUVBNzVaWGp1enNJR09PMkY5TStyYVFQcXMrRHZ2REpzQ3gyZnRudk1WWVJKcVliaGt6YnpsVQowSHBCVnk3NmE3WmF6Umxhd3RGZ3ljMlpyQThpM0F3K3J6d1pQclNJeWNieC9nUVduRzZlbFF1Y0FFVWdXODRNCkdSbXhKUGlmOGRQNUxsZXdRalFjUFJwZVoxMzlYODJreGRSSEdma1pscHlXQnFLajBTWExRSEVDZ1lFQXcybkEKbUVXdWQzZFJvam5zbnFOYjBlYXdFUFQrbzBjZ2RyaENQOTZQK1pEekNhcURUblZKV21PeWVxRlk1eVdSSEZOLwpzbEhXU2lTRUFjRXRYZys5aGlMc0RXdHVPdzhUZzYyN2VrOEh1UUtMb2tWWEFUWG1NZG9xOWRyQW9INU5hV2lECmRSY3dEU2EvamhIN3RZV1hKZDA4VkpUNlJJdU8vMVZpbDBtbEk5MENnWUVBb2lsNkhnMFNUV0hWWDNJeG9raEwKSFgrK1ExbjRYcFJ5VEg0eldydWY0TjlhYUxxNTY0QThmZGNodnFiWGJHeEN6U3RxR1E2cW1peUU1TVpoNjlxRgoyd21zZEpxeE14RnEzV2xhL0lxSzM0cTZEaHk3cUNld1hKVGRKNDc0Z3kvY0twZkRmeXZTS1RGZDBFejNvQTZLCmhqUUY0L2lNYnpxUStQREFQR0YrVHFFQ2dZQmQ1YnZncjJMMURzV1FJU3M4MHh3MDBSZDdIbTRaQVAxdGJuNk8KK0IvUWVNRC92UXBaTWV4c1hZbU9lV2Noc3FCMnJ2eW1MOEs3WDY1NnRWdGFYay9nVzNsM3ZVNTdYSFF4Q3RNUwpJMVYvcGVSNHRiN24yd0ZncFFlTm1XNkQ4QXk4Z0xiaUZhRkdRSDg5QWhFa0dTd1d5cWJKc2NoTUZZOUJ5OEtUCkZaVWZsUUtCZ0V3VzJkVUpOZEJMeXNycDhOTE1VbGt1ZnJxbllpUTNTQUhoNFZzWkg1TXU0MW55Yi95NUUyMW4KMk55d3ltWGRlb3VJcFZjcUlVTXl0L3FKRmhIcFJNeVEyWktPR0QyWG5YaENNVlRlL0FQNDJod294Nm02QkZpQgpvemZFa2wwak5uZmREcjZrL1p2MlQ1TnFzaWxaRXJBQlZGOTBKazdtUFBIa0Q2R1ZMUUJ4Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+  defaultSANList: []
+  enabled: true
+  enforced: true
+  generateTLS: false
+  insecureSkipVerify: true
+  permanentRedirect: false
+  upstream: false
+  useCertManager: true
+testFramework:
+  enabled: false
+  image: dduportal/bats
+  tag: 0.4.0
+tolerations: []
+tracing:
+  enabled: false
+  serviceName: traefik
+traefikLogFormat: json
+whiteListSourceRange: []
+
+HOOKS:
+---
+# traefik-kubeaddons
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: traefik-kubeaddons
+  labels:
+      app: traefik
+      chart: traefik-1.72.15
+      release: "traefik-kubeaddons"
+      heritage: "Tiller"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-6"
+    # We have to add the following annotation so that the upgrade does
+    # not fail with "already exists" error. See more details in:
+    # https://github.com/helm/helm/issues/5482
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  secretName: traefik-kubeaddons-certificate-temporary
+  issuerRef:
+    name: kubernetes-ca
+    kind: ClusterIssuer
+  # DCOS-60297 Update certificate to comply with Apple security requirements
+  # https://support.apple.com/en-us/HT210176
+  duration: 19200h   # 800 days
+  usages:
+  - digital signature
+  - key encipherment
+  - server auth
+  organization:
+  - D2iQ
+  # The commonName will get replaced by kubeaddons-config
+  # init-container for traefik
+  commonName: traefik.localhost.localdomain
+MANIFEST:
+
+---
+# Source: traefik/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-kubeaddons
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+data:
+  traefik.toml: |
+    # traefik.toml
+    logLevel = "info"
+    InsecureSkipVerify = true
+    defaultEntryPoints = ["http","https"]
+    [entryPoints]
+      [entryPoints.http]
+      address = ":80"
+      compress = true
+        [entryPoints.http.redirect]
+          regex = "^http://(.*)"
+          replacement = "https://$1"
+      [entryPoints.https]
+      address = ":443"
+      compress = true
+        [entryPoints.https.tls]
+        [entryPoints.https.tls.defaultCertificate]
+        certFile = "/ssl/tls.crt"
+        keyFile = "/ssl/tls.key"
+      [entryPoints.traefik]
+      address = ":8080"
+    [ping]
+    entryPoint = "http"
+    [kubernetes]
+      [kubernetes.ingressEndpoint]
+      publishedService = "kubeaddons/traefik-kubeaddons"
+    [traefikLog]
+      format = "json"
+    [api]
+      entryPoint = "traefik"
+      dashboard = true
+    [metrics]
+      [metrics.prometheus]
+        entryPoint = "traefik"
+---
+# Source: traefik/templates/init-cert-rbac.yaml
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: traefik-kubeaddons-cert-init
+---
+# Source: traefik/templates/rbac.yaml
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: traefik-kubeaddons
+---
+# Source: traefik/templates/dashboard-roles.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: opsportal-traefik-edit
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+rules:
+- nonResourceURLs:
+  - /ops/portal/traefik
+  - /ops/portal/traefik/*
+  verbs:
+  - get
+  - head
+  - post
+  - put
+---
+# Source: traefik/templates/dashboard-roles.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: opsportal-traefik-admin
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+rules:
+- nonResourceURLs:
+  - /ops/portal/traefik
+  - /ops/portal/traefik/*
+  verbs:
+  - get
+  - head
+  - post
+  - put
+  - delete
+---
+# Source: traefik/templates/dashboard-roles.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: opsportal-traefik-view
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+rules:
+- nonResourceURLs:
+  - /ops/portal/traefik
+  - /ops/portal/traefik/*
+  verbs:
+  - get
+  - head
+---
+# Source: traefik/templates/rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-kubeaddons
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+---
+# Source: traefik/templates/rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-kubeaddons
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-kubeaddons
+subjects:
+- kind: ServiceAccount
+  name: traefik-kubeaddons
+  namespace: kubeaddons
+---
+# Source: traefik/templates/init-cert-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: update-traefik-cert
+  namespace: kubeaddons
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["certmanager.k8s.io"]
+  resources: ["certificates"]
+  verbs: ["get", "list", "watch", "create", "update"]
+---
+# Source: traefik/templates/init-cert-rbac.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-kubeaddons-cert-init
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: update-traefik-cert
+subjects:
+- kind: ServiceAccount
+  name: traefik-kubeaddons-cert-init
+  namespace: kubeaddons
+---
+# Source: traefik/templates/init-cert-rbac.yaml
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-kubeaddons-default-cert-init
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: update-traefik-cert
+subjects:
+- kind: ServiceAccount
+  name: traefik-kubeaddons
+  namespace: kubeaddons
+---
+# Source: traefik/templates/dashboard-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-kubeaddons-dashboard
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+  annotations:
+spec:
+  type: ClusterIP
+  selector:
+    app: traefik
+    release: traefik-kubeaddons
+  ports:
+  - name: dashboard-http
+    port: 80
+    targetPort: 8080
+---
+# Source: traefik/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-kubeaddons
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+    servicemonitor.kubeaddons.mesosphere.io/path: "metrics"
+  annotations:
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  selector:
+    app: traefik
+    release: traefik-kubeaddons
+  ports:
+  - port: 80
+    name: http
+    targetPort: http
+  - port: 443
+    name: https
+  - port: 8080
+    name: metrics
+    targetPort: dash
+---
+# Source: traefik/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik-kubeaddons
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+  annotations:
+    configmap.reloader.stakater.com/reload: konvoyconfig-kubeaddons
+    secret.reloader.stakater.com/reload: traefik-kubeaddons-certificate
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: traefik
+      release: traefik-kubeaddons
+  template:
+    metadata:
+      annotations:
+        checksum/config: 9fb60d9796e75aa6227962e5f3ee3fb280f4e7ad6caf8927e5d2e6e47d118c51
+      labels:
+        app: traefik
+        chart: traefik-1.72.15
+        release: "traefik-kubeaddons"
+        heritage: "Tiller"
+    spec:
+      initContainers:
+        - args:
+          - traefik
+          env:
+          - name: TRAEFIK_INGRESS_NAMESPACE
+            value: kubeaddons
+          - name: TRAEFIK_INGRESS_SERVICE_NAME
+            value: traefik-kubeaddons
+          - name: TRAEFIK_INGRESS_CERTIFICATE_NAME
+            value: traefik-kubeaddons
+          - name: TRAEFIK_INGRESS_CERTIFICATE_ISSUER
+            value: kubernetes-ca
+          - name: TRAEFIK_INGRESS_CERTIFICATE_SECRET_NAME
+            value: traefik-kubeaddons-certificate
+          - name: TRAEFIK_KONVOY_ADDONS_CONFIG_MAP
+            value: konvoyconfig-kubeaddons
+          - name: TRAEFIK_CLUSTER_HOSTNAME_KEY
+            value: clusterHostname
+          image: mesosphere/kubeaddons-addon-initializer:v0.1.5
+          name: initialize-traefik-certificate
+
+      serviceAccountName: traefik-kubeaddons
+      terminationGracePeriodSeconds: 60
+      containers:
+      - image: traefik:1.7.12
+        name: traefik-kubeaddons
+        resources:
+          limits:
+            cpu: 1000m
+          requests:
+            cpu: 500m
+
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 80
+          failureThreshold: 1
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 80
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /ssl
+          name: ssl
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: httpn
+          containerPort: 8880
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        - name: dash
+          containerPort: 8080
+          protocol: TCP
+        args:
+        - --configfile=/config/traefik.toml
+
+      volumes:
+      - name: config
+        configMap:
+          name: traefik-kubeaddons
+      - name: ssl
+        secret:
+          secretName: traefik-kubeaddons-certificate
+---
+# Source: traefik/templates/init-cert-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Note, we need to add chart version to the name of the job so that
+  # this Job will get re-run during upgrade. This is because the
+  # certificate object is a helm hook, and will be re-created during
+  # an upgrade. See more details in:
+  # https://github.com/helm/helm/issues/5482
+  name: traefik-kubeaddons-1.72.15
+  annotations:
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation"
+  labels:
+    chart: traefik-1.72.15
+    app: traefik
+spec:
+  template:
+    metadata:
+      name: "update-traefik-certificate"
+    spec:
+      serviceAccountName: traefik-kubeaddons-cert-init
+      restartPolicy: Never
+      containers:
+      - name: traefik
+        image: mesosphere/kubeaddons-addon-initializer:v0.1.5
+        imagePullPolicy: IfNotPresent
+        args: ["traefik"]
+        env:
+        - name: "TRAEFIK_INGRESS_NAMESPACE"
+          value: "kubeaddons"
+        - name: "TRAEFIK_INGRESS_SERVICE_NAME"
+          value: "traefik-kubeaddons"
+        - name: "TRAEFIK_INGRESS_CERTIFICATE_NAME"
+          value: "traefik-kubeaddons"
+        - name: "TRAEFIK_INGRESS_CERTIFICATE_ISSUER"
+          value: "kubernetes-ca"
+        - name: "TRAEFIK_INGRESS_CERTIFICATE_SECRET_NAME"
+          value: "traefik-kubeaddons-certificate"
+        - name: "TRAEFIK_KONVOY_ADDONS_CONFIG_MAP"
+          value: "konvoyconfig-kubeaddons"
+        - name: "TRAEFIK_CLUSTER_HOSTNAME_KEY"
+          value: "clusterHostname"
+---
+# Source: traefik/templates/dashboard-ingress.yaml
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-kubeaddons-dashboard
+  labels:
+    app: traefik
+    chart: traefik-1.72.15
+    release: "traefik-kubeaddons"
+    heritage: "Tiller"
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.frontend.rule.type: "PathPrefixStrip"
+    traefik.ingress.kubernetes.io/auth-response-headers: "X-Forwarded-User,Authorization,Impersonate-User,Impersonate-Group"
+    traefik.ingress.kubernetes.io/auth-type: "forward"
+    traefik.ingress.kubernetes.io/auth-url: "http://traefik-forward-auth-kubeaddons.kubeaddons.svc.cluster.local:4181/"
+    traefik.ingress.kubernetes.io/priority: "2"
+spec:
+  rules:
+  - host:
+    http:
+      paths:
+      - path: /ops/portal/traefik
+        backend:
+          serviceName: traefik-kubeaddons-dashboard
+          servicePort: dashboard-http
