@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aihub-portal-nexus-app
+  namespace: aihub-portal
+  labels:
+    app: aihub-portal-nexus-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aihub-portal-nexus-app
+  template:
+    metadata:
+      labels:
+        app: aihub-portal-nexus-app
+    spec:
+      containers:
+      - name: nexus
+        image: sonatype/nexus3:3.20.1
+        ports:
+          - containerPort: 8081
+          - containerPort: 5000
+          - containerPort: 6000
+          - containerPort: 6100
+          - containerPort: 7000
+        volumeMounts:
+          - name: nexus-volume
+            mountPath: /nexus-data
+      volumes:
+        - name: nexus-volume
+          persistentVolumeClaim:
+            claimName: nexus-nfs-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nexus-nfs
+  labels:
+    name: nexus-nfs
+spec:
+  storageClassName: localvolumeprovisioner
+  capacity:
+    storage: 60Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    server: 192.168.0.33
+    path: "/volume1/dcos/ai-test/k8s-service/etc-data/nexus-data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexus-nfs-pvc
+  namespace: aihub-portal
+spec:
+  storageClassName: localvolumeprovisioner
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 60Gi
+  selector:
+    matchLabels:
+      name: nexus-nfs
