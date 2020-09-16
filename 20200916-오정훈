@@ -1,0 +1,6 @@
+#!/bin/bash
+APISERVER=$(kubectl config view | grep server | cut -f 2- -d ":" | tr -d " ")
+# Retrieve 'default' account's TOKEN in 'default' namespace
+TOKEN="$(kubectl get secret $(kubectl get secrets | grep hcp-sa-admin | cut -f1 -d ' ') -o jsonpath='{$.data.token}' | base64 --decode)"
+echo $TOKEN
+curl -D - --insecure --header "Authorization: Bearer $TOKEN" $APISERVER/api/v1/namespaces/default/services
